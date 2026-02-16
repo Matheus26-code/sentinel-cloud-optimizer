@@ -68,3 +68,12 @@ resource "aws_security_group_rule" "allow_postgres" {
   cidr_blocks       = ["0.0.0.0/0"] # Em produção, use apenas o IP da sua EC2
   security_group_id = tolist(aws_db_instance.sentinel_db.vpc_security_group_ids)[0]
 }
+
+resource "aws_security_group_rule" "allow_java_backend" {
+  type              = "ingress"
+  from_port         = 8080
+  to_port           = 8080
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = tolist(aws_instance.sentinel_server.vpc_security_group_ids)[0]
+}
