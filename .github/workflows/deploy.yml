@@ -1,4 +1,4 @@
-name: Cloud Sentinel Deploy
+name: Sentinel Final Deploy
 
 on:
   push:
