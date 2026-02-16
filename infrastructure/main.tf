@@ -58,3 +58,13 @@ resource "aws_db_instance" "sentinel_db" {
 output "rds_endpoint" {
   value = aws_db_instance.sentinel_db.endpoint
 }
+
+# Criando uma regra de segurança para permitir conexões no banco
+resource "aws_security_group_rule" "allow_postgres" {
+  type              = "ingress"
+  from_port         = 5432
+  to_port           = 5432
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"] # Em produção, use apenas o IP da sua EC2
+  security_group_id = tolist(aws_db_instance.sentinel_db.vpc_security_group_ids)[0]
+}
