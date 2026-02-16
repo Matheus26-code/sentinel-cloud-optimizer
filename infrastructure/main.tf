@@ -39,3 +39,22 @@ resource "aws_instance" "sentinel_server" {
     Name = "Sentinel-Backend-Server"
   }
 }
+
+# Criando o Banco de Dados PostgreSQL (Free Tier)
+resource "aws_db_instance" "sentinel_db" {
+  allocated_storage    = 20
+  engine               = "postgres"
+  engine_version       = "16.3"
+  instance_class       = "db.t3.micro"
+  db_name              = "sentinel_cloud"
+  username             = "sentinel_admin"
+  password             = "sentinel123" # Use uma senha forte
+  parameter_group_name = "default.postgres16"
+  skip_final_snapshot  = true
+  publicly_accessible  = true
+}
+
+# Exibindo o endereço do banco após a criação
+output "rds_endpoint" {
+  value = aws_db_instance.sentinel_db.endpoint
+}

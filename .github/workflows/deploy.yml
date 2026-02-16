@@ -17,7 +17,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Build with Maven
-        run: mvn -f backend-java/pom.xml clean package -DskipTests
+        run: mvn -f backend-java/cloud-optimizer/pom.xml clean package -DskipTests
 
       - name: Deploy to EC2
         uses: appleboy/scp-action@v0.1.7
