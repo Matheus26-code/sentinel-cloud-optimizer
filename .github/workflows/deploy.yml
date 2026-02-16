@@ -25,9 +25,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "backend-java/target/*.jar"
+          source: "backend-java/cloud-optimizer/target/*.jar"
           target: "/home/ubuntu/app"
-          strip_components: 2
+          strip_components: 3
 
       - name: Executing remote ssh commands
         uses: appleboy/ssh-action@v1.0.3
