@@ -1,0 +1,43 @@
+name: Cloud Sentinel CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-java:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn -f backend-java/pom.xml clean package -DskipTests
+
+      - name: Deploy to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "backend-java/target/*.jar"
+          target: "/home/ubuntu/app"
+          strip_components: 2
+
+      - name: Executing remote ssh commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo apt-get update
+            sudo apt-get install -y openjdk-21-jdk
+            pkill -f 'java -jar' || true
+            mkdir -p /home/ubuntu/app
+            nohup java -jar /home/ubuntu/app/*.jar > /dev/null 2>&1 &
