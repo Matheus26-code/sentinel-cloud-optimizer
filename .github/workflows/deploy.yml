@@ -37,20 +37,14 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Instala o Java se necessário
-            if ! type -p java > /dev/null; then
-              sudo apt-get update && sudo apt-get install -y openjdk-21-jdk
-            fi
+            # 1. Garante que o utilitário 'at' esteja instalado
+            sudo apt-get update && sudo apt-get install -y at openjdk-21-jdk
             
-            # Limpa execuções anteriores
+            # 2. Limpa o que já existe
             sudo pkill -f 'java -jar' || true
             mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
             
-            # O SEGREDO: Redirecionar stdout (1) e stderr (2) para o log e rodar em BG
-            # O & no final e o disown garantem que o GitHub possa sair sem matar o Java
-            nohup java -jar *.jar > log.txt 2>&1 &
-            
-            # Aguarda 2 segundos e verifica se o processo subiu
-            sleep 2
-            disown -a
+            # 3. O PULO DO GATO: Agenda a execução para "agora"
+            # Isso faz o Linux assumir o processo e libera o GitHub na hora
+            echo "java -jar /home/ubuntu/app/*.jar > /home/ubuntu/app/log.txt 2>&1" | at now + 1 minute
