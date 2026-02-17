@@ -37,14 +37,20 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # Instala o Java se necessário
             if ! type -p java > /dev/null; then
               sudo apt-get update && sudo apt-get install -y openjdk-21-jdk
             fi
             
+            # Limpa execuções anteriores
             sudo pkill -f 'java -jar' || true
             mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
             
-            # Rodando com disown para garantir que o Java sobreviva ao fim da sessão
+            # O SEGREDO: Redirecionar stdout (1) e stderr (2) para o log e rodar em BG
+            # O & no final e o disown garantem que o GitHub possa sair sem matar o Java
             nohup java -jar *.jar > log.txt 2>&1 &
-            disown
+            
+            # Aguarda 2 segundos e verifica se o processo subiu
+            sleep 2
+            disown -a
