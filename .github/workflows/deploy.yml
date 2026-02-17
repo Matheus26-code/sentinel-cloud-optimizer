@@ -37,14 +37,31 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 1. Garante que o utilitário 'at' esteja instalado
-            sudo apt-get update && sudo apt-get install -y at openjdk-21-jdk
-            
-            # 2. Limpa o que já existe
-            sudo pkill -f 'java -jar' || true
-            mkdir -p /home/ubuntu/app
-            cd /home/ubuntu/app
-            
-            # 3. O PULO DO GATO: Agenda a execução para "agora"
-            # Isso faz o Linux assumir o processo e libera o GitHub na hora
-            echo "java -jar /home/ubuntu/app/*.jar > /home/ubuntu/app/log.txt 2>&1" | at now + 1 minute
+            # 1. Instala o Java se necessário
+            if ! type -p java > /dev/null; then
+              sudo apt-get update && sudo apt-get install -y openjdk-21-jdk
+            fi
+
+            # 2. Cria o arquivo de serviço do Systemd (O segredo da automação)
+            sudo bash -c 'cat <<EOF > /etc/systemd/system/sentinel.service
+            [Unit]
+            Description=Sentinel Cloud Optimizer Service
+            After=network.target
+
+            [Service]
+            User=ubuntu
+            WorkingDirectory=/home/ubuntu/app
+            # Caminho absoluto para o Java e para o seu JAR
+            ExecStart=/usr/bin/java -jar /home/ubuntu/app/cloud-optimizer-0.0.1-SNAPSHOT.jar
+            SuccessExitStatus=143
+            Restart=always
+            RestartSec=10
+
+            [Install]
+            WantedBy=multi-user.target
+            EOF'
+
+            # 3. Recarrega o sistema, habilita e reinicia o serviço
+            sudo systemctl daemon-reload
+            sudo systemctl enable sentinel
+            sudo systemctl restart sentinel
