@@ -8,6 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/costs")
+@CrossOrigin(origins = "*")
 public class AwsCostController {
 
     @Autowired
