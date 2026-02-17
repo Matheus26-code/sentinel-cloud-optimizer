@@ -1,88 +1,85 @@
-# main.tf - Margem Zero de Erro
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
 provider "aws" {
-  region = "us-east-1" # Região da Virgínia (EUA)
+  region = "us-east-1"
 }
 
-# Vamos criar um "Cofre" (S3 Bucket) para guardar arquivos do projeto futuramente
-resource "aws_s3_bucket" "sentinel_storage" {
-  bucket = "sentinel-cloud-optimizer-storage-${random_id.suffix.hex}"
-}
+# 1. Grupo de Segurança para a Instância EC2 (Backend)
+resource "aws_security_group" "sentinel_sg" {
+  name        = "sentinel-sg-final"
+  description = "Security group for Sentinel Cloud Optimizer"
 
-resource "random_id" "suffix" {
-  byte_length = 4
-}
-
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  # Porta 22: SSH (Para o Deploy do GitHub e seu acesso manual)
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-  owners = ["099720109477"] # Canonical
+
+  # Porta 8080: Java Backend (Para o seu navegador/API)
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Saída liberada para o servidor baixar atualizações
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
-# Criando a Instância EC2
+# 2. Grupo de Segurança para o Banco de Dados RDS
+resource "aws_security_group" "rds_sg" {
+  name        = "sentinel-rds-sg"
+  description = "Allow port 5432 for PostgreSQL"
+
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.sentinel_sg.id]
+  }
+}
+
+# 3. Instância EC2 (Onde o Java vai rodar)
 resource "aws_instance" "sentinel_server" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t2.micro" # Certifique-se de que us-east-1 suporta t2.micro no Free Tier
+  ami           = "ami-080e1f13689e07408" # Ubuntu 22.04 LTS em us-east-1
+  instance_type = "t2.micro"
+  
+
+  key_name      = "sentinel-deploy-final"
+
+  vpc_security_group_ids = [aws_security_group.sentinel_sg.id]
 
   tags = {
-    Name = "Sentinel-Backend-Server"
+    Name = "sentinel-backend-server"
   }
 }
 
-# Criando o Banco de Dados PostgreSQL (Free Tier)
+# 4. Banco de Dados RDS (PostgreSQL)
 resource "aws_db_instance" "sentinel_db" {
   allocated_storage    = 20
+  db_name              = "sentinel_cloud"
   engine               = "postgres"
   engine_version       = "16.3"
-  instance_class       = "db.t3.micro"
-  db_name              = "sentinel_cloud"
+  instance_class       = "db.t4g.micro"
   username             = "sentinel_admin"
-  password             = "sentinel123" # Use uma senha forte
+  password             = "sentinel123"
   parameter_group_name = "default.postgres16"
   skip_final_snapshot  = true
   publicly_accessible  = true
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
 }
 
-# Exibindo o endereço do banco após a criação
+# Outputs para facilitar sua vida
+output "ec2_public_ip" {
+  value = aws_instance.sentinel_server.public_ip
+}
+
 output "rds_endpoint" {
   value = aws_db_instance.sentinel_db.endpoint
-}
-
-# Criando uma regra de segurança para permitir conexões no banco
-resource "aws_security_group_rule" "allow_postgres" {
-  type              = "ingress"
-  from_port         = 5432
-  to_port           = 5432
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"] # Em produção, use apenas o IP da sua EC2
-  security_group_id = tolist(aws_db_instance.sentinel_db.vpc_security_group_ids)[0]
-}
-
-resource "aws_security_group_rule" "allow_java_backend" {
-  type              = "ingress"
-  from_port         = 8080
-  to_port           = 8080
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = tolist(aws_instance.sentinel_server.vpc_security_group_ids)[0]
-}
-
-resource "aws_security_group_rule" "allow_ssh_deploy" {
-  type              = "ingress"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"] # Permite o acesso via SSH
-  security_group_id = tolist(aws_instance.sentinel_server.vpc_security_group_ids)[0]
 }
