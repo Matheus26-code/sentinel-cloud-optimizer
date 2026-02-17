@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel Cloud | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-900 text-white font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <header class="flex justify-between items-center mb-10 border-b border-slate-700 pb-5">
+            <div>
+                <h1 class="text-3xl font-bold text-emerald-400">Sentinel Cloud Optimizer</h1>
+                <p class="text-slate-400">Monitoramento de Custos AWS em Tempo Real</p>
+            </div>
+            <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                <span class="text-sm block text-slate-500 uppercase font-bold">Status do Servidor</span>
+                <span class="text-emerald-500 flex items-center gap-2">
+                    <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span> Online
+                </span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
+                <h2 class="text-xl font-semibold mb-4">Custos por Recurso (USD)</h2>
+                <canvas id="costChart"></canvas>
+            </div>
+
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
+                <h2 class="text-xl font-semibold mb-4">Últimas Coletas</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-slate-500 border-b border-slate-700">
+                                <th class="py-3 px-2">Recurso</th>
+                                <th class="py-3 px-2">Valor</th>
+                                <th class="py-3 px-2">Data/Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody id="costTableBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://100.53.185.3:8080/api/costs';
+
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                renderDashboard(data);
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+            }
+        }
+
+        function renderDashboard(data) {
+            const tableBody = document.getElementById('costTableBody');
+            tableBody.innerHTML = '';
+
+            const labels = [];
+            const values = [];
+
+            data.forEach(item => {
+                // Preenche Tabela
+                const row = `<tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
+                    <td class="py-3 px-2 font-medium text-emerald-300">${item.resourceName}</td>
+                    <td class="py-3 px-2">$ ${item.costAmount.toFixed(2)}</td>
+                    <td class="py-3 px-2 text-slate-400 text-sm">${new Date(item.captureDate).toLocaleString()}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+
+                // Preenche Gráfico
+                labels.push(item.resourceName);
+                values.push(item.costAmount);
+            });
+
+            const ctx = document.getElementById('costChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Custo em USD',
+                        data: values,
+                        backgroundColor: '#10b981',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#334155' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>

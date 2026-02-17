@@ -2,7 +2,7 @@ import requests
 import datetime
 
 # Configuração: Onde o seu Java está rodando
-API_URL = "http://localhost:8080/api/costs"
+API_URL = "http://100.53.185.3:8080/api/costs"
 
 def enviar_custo(nome_recurso, valor):
     dados = {
