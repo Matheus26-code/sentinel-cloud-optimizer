@@ -37,16 +37,14 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-        
             if ! type -p java > /dev/null; then
               sudo apt-get update && sudo apt-get install -y openjdk-21-jdk
             fi
-          
+            
             sudo pkill -f 'java -jar' || true
             mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
             
-            nohup java -jar *.jar > /dev/null 2>&1 &
-            
-            sleep 5
-            ps aux | grep java
+            # Rodando com disown para garantir que o Java sobreviva ao fim da sessão
+            nohup java -jar *.jar > log.txt 2>&1 &
+            disown
