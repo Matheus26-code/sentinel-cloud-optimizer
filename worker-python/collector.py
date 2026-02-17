@@ -24,3 +24,4 @@ if __name__ == "__main__":
     print(" Iniciando Coletor Sentinel...")
     enviar_custo("Instância EC2 - Produção", 45.50)
     enviar_custo("Banco RDS - QA", 12.75)
+    

@@ -73,7 +73,12 @@
                     <td class="py-3 px-2 font-medium text-emerald-300">${item.resourceName}</td>
                     <td class="py-3 px-2">$ ${item.costAmount.toFixed(2)}</td>
                     <td class="py-3 px-2 text-slate-400 text-sm">${new Date(item.captureDate).toLocaleString()}</td>
-                </tr>`;
+                    <td class="py-3 px-2">
+                    <button onclick="deletarCusto(${item.id})" class="text-red-500 hover:text-red-700 font-bold">
+                        🗑️
+                    </button>
+                    </td>
+                    </tr>`;
                 tableBody.innerHTML += row;
 
                 // Preenche Gráfico
@@ -105,6 +110,22 @@
         }
 
         fetchData();
+        
+        async function deletarCusto(id) {
+    if (confirm("Deseja remover este registro?")) {
+        try {
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                fetchData(); // Isso atualiza o gráfico e a tabela na hora!
+            }
+        } catch (error) {
+            console.error('Erro ao deletar:', error);
+        }
+    }
+}
     </script>
 </body>
 </html>

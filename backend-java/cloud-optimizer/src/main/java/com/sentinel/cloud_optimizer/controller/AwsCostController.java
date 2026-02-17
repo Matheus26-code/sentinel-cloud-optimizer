@@ -23,4 +23,9 @@ public class AwsCostController {
     public List<AwsCost> listar() {
         return service.listarTodos();
     }
+
+    @DeleteMapping("/{id}")
+    public void deletar(@PathVariable Long id) {
+        service.excluir(id);
+    }
 }

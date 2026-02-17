@@ -35,4 +35,8 @@ public class AwsCostService {
     public List<AwsCost> listarTodos() {
         return repository.findAll();
     }
+
+    public void excluir(Long id) {
+        repository.deleteById(id);
+    }
 }
