@@ -1,8 +1,4 @@
 # Sentinel Cloud Optimizer
-
-Sistema de monitoramento e automação de custos em nuvem (AWS), focado em governança financeira e otimização de recursos.
-
-# Sentinel Cloud Optimizer
 Monitoramento inteligente de custos AWS com foco em eficiência e automação.
 
 ## Tecnologias Utilizadas
