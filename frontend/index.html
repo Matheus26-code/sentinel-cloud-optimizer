@@ -48,7 +48,9 @@
     </div>
 
     <script>
-        const API_URL = 'http://100.53.185.3:8080/api/costs';
+        // Em dev: deixe como localhost. Em prod: substitua pelo IP da EC2
+        // ou sirva o frontend de um servidor que injete window.API_BASE_URL.
+        const API_URL = (window.API_BASE_URL || 'http://localhost:8080') + '/api/costs';
 
         async function fetchData() {
             try {

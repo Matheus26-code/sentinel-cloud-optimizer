@@ -1,0 +1,22 @@
+# ============================================================
+# Template de variáveis do Terraform
+# Copie este arquivo para terraform.tfvars e preencha os valores.
+# O arquivo terraform.tfvars NÃO deve ser commitado (.gitignore).
+# ============================================================
+
+aws_region = "us-east-1"
+
+# Seu IP pessoal com máscara /32 (apenas um IP).
+# Para descobrir seu IP: curl ifconfig.me
+allowed_ssh_cidr = "SEU_IP_AQUI/32"
+
+# Nome do key pair criado no painel EC2 da AWS
+key_name = "sentinel-deploy-final"
+
+# Credenciais do banco RDS
+db_username = "sentinel_admin"
+db_password = "SENHA_FORTE_AQUI_MINIMO_16_CARACTERES"
+db_name     = "sentinel_cloud"
+
+# Manter false em produção. True apenas para debug temporário.
+rds_publicly_accessible = false

@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local properties (credentials — never commit) ###
+application-local.properties
+application-dev.properties
