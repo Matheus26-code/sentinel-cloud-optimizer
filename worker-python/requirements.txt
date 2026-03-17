@@ -1,2 +1,5 @@
-requests
-boto3
+# Dependências de produção
+requests==2.32.3
+
+# Dependências de teste (instale com: pip install -r requirements-dev.txt)
+# Ver requirements-dev.txt
