@@ -15,7 +15,11 @@
     <description>Sentinel Cloud Optimizer Backend</description>
     <properties>
         <java.version>21</java.version>
+        <!-- Versão usada em produção (EC2/CI). Localmente pode rodar com Java 25. -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Sobrescreve a versão gerenciada pelo Spring Boot parent.
+             1.18.32 corrige o bug TypeTag::UNKNOWN com Java 21 + annotationProcessorPaths -->
+        <lombok.version>1.18.32</lombok.version>
     </properties>
     <dependencies>
         <dependency>
@@ -67,6 +71,44 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Exclui Lombok do JAR final: ele só é necessário em compile-time -->
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- Registra o Lombok como annotation processor explicitamente.
+                         Necessário para que @Data, @RequiredArgsConstructor, etc.
+                         gerem getters/setters/construtores em tempo de compilação. -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Java 21+ bloqueia "dynamic agent loading" por padrão.
+                         O Mockito inline mock maker precisa dessa permissão para
+                         instrumentar bytecode em tempo de execução dos testes.
+                         Sem essa flag, qualquer classe anotada com @Mock falha. -->
+                    <argLine>-XX:+EnableDynamicAgentLoading -Djdk.attach.allowAttachSelf=true</argLine>
+                </configuration>
             </plugin>
         </plugins>
     </build>
