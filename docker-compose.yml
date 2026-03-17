@@ -1,12 +1,25 @@
 version: '3.8'
 
-# Para rodar localmente:
-# 1. Copie .env.example para .env e preencha os valores
-# 2. docker-compose up -d
+# =============================================================
+# Como rodar o projeto completo localmente:
+#
+# 1. Copie .env.example para .env e preencha POSTGRES_PASSWORD
+# 2. docker-compose up --build
+#
+# Só o banco (sem buildar o backend):
+#   docker-compose up db
+#
+# Acesso:
+#   API:     http://localhost:8080/api/costs
+#   Swagger: http://localhost:8080/swagger-ui.html
+#   DB:      localhost:5433 (user: admin, db: sentinel_cloud)
+# =============================================================
 
 services:
+
+  # ─── Banco de dados PostgreSQL ───────────────────────────────
   db:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: sentinel_db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-admin}
@@ -16,6 +29,33 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Healthcheck: o backend só sobe depois que o banco aceitar conexões.
+    # Sem isso, o Java tenta conectar antes do Postgres estar pronto e falha.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-sentinel_cloud}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Backend Java (Spring Boot) ──────────────────────────────
+  backend:
+    build:
+      context: ./backend-java/cloud-optimizer
+      dockerfile: Dockerfile
+    container_name: sentinel_backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      # Sobrescreve application-dev.properties para usar o nome do serviço Docker
+      # ('db') em vez de 'localhost'. Dentro da rede Docker, serviços se
+      # comunicam pelo nome, não por localhost.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-sentinel_cloud}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy  # Aguarda o healthcheck do banco passar
 
 volumes:
   postgres_data:

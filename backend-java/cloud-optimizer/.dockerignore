@@ -1,0 +1,15 @@
+# Exclui arquivos desnecessários do contexto de build do Docker.
+# Quanto menor o contexto, mais rápido o build.
+
+target/
+*.md
+.git
+.gitignore
+.idea
+.vscode
+*.iml
+
+# Credenciais locais nunca entram na imagem
+application-dev.properties
+application-local.properties
+.env
