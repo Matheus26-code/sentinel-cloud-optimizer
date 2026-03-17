@@ -2,6 +2,7 @@ package com.sentinel.cloud_optimizer.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,9 +16,11 @@ public class BudgetsAlerts {
 
     private String message;
     private Double exceededAmount;
-    private LocalDateTime alertDate = LocalDateTime.now();
 
-    // Vamos salvar qual custo gerou esse alerta
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime alertDate;
+
     @OneToOne
     @JoinColumn(name = "cost_id")
     private AwsCost originCost;

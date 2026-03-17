@@ -1,20 +1,35 @@
 package com.sentinel.cloud_optimizer.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "aws_costs")
-@Data // O Lombok cria os getters e setters automaticamente
+@Data
 public class AwsCost {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String resourceName; // Nome do recurso (ex: Instância EC2)
-    private Double costAmount;   // Valor em dólares
+    @NotBlank
+    private String resourceName;
+
+    @Positive
+    private Double costAmount;
+
     private String currency = "USD";
-    private LocalDateTime captureDate = LocalDateTime.now();
+
+    /**
+     * @CreationTimestamp: o Hibernate define o valor automaticamente no INSERT.
+     * É mais confiável que LocalDateTime.now() no campo, que é avaliado
+     * quando o objeto Java é criado — não quando é persistido no banco.
+     */
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime captureDate;
 }

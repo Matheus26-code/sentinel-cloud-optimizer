@@ -54,9 +54,11 @@
 
         async function fetchData() {
             try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
-                renderDashboard(data);
+                // A API retorna Page<AwsCostResponseDTO>: { content: [...], totalElements: N, ... }
+                // ?size=100 garante que o dashboard mostre todos os registros recentes
+                const response = await fetch(API_URL + '?size=100&sort=captureDate,desc');
+                const page = await response.json();
+                renderDashboard(page.content);
             } catch (error) {
                 console.error('Erro ao buscar dados:', error);
             }
